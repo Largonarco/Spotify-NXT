@@ -4,7 +4,7 @@ export const get = async ({ url }) => {
 	const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
 	const code = url.searchParams.get('code');
 
-	let tokens = await fetch(
+	let res = await fetch(
 		`https://accounts.spotify.com/api/token?code=${code}&redirect_uri=${REDIRECT_URI}&grant_type=authorization_code`,
 		{
 			method: 'POST',
@@ -14,17 +14,9 @@ export const get = async ({ url }) => {
 			}
 		}
 	);
-	tokens = await tokens.json();
+	res = await res.json();
 
-	if (tokens.access_token) {
-		return {
-			status: 200,
-			body: tokens
-		};
-	} else {
-		return {
-			status: 502,
-			body: { error: "Couldn't fetch tokens" }
-		};
-	}
+	return {
+		body: res
+	};
 };

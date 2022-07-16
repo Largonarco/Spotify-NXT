@@ -1,10 +1,10 @@
 import 'dotenv/config';
 
 export const get = async ({ url }) => {
-	const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
-	const refreshToken = url.searchParams.get('refresh_token');
+	const { CLIENT_ID, CLIENT_SECRET } = process.env;
+	const refreshToken = url.searchParams.get('token');
 
-	let tokens = await fetch(
+	let res = await fetch(
 		`https://accounts.spotify.com/api/token?refresh_token=${refreshToken}&grant_type=refresh_token`,
 		{
 			method: 'POST',
@@ -14,17 +14,9 @@ export const get = async ({ url }) => {
 			}
 		}
 	);
-	tokens = await tokens.json();
+	res = await res.json();
 
-	if (tokens.access_token) {
-		return {
-			status: 200,
-			body: tokens
-		};
-	} else {
-		return {
-			status: 502,
-			body: { error: "Couldn't fetch tokens" }
-		};
-	}
+	return {
+		body: res
+	};
 };
