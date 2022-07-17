@@ -14,7 +14,7 @@ export const getNewTokens = async () => {
 export const spotify_fetch_get = async (url) => {
 	let data = await fetch_get(url);
 
-	if (data.status === 401) {
+	if (data?.error?.status === 401) {
 		await getNewTokens();
 		data = await fetch_get(url);
 	}

@@ -1,15 +1,14 @@
 <script context="module">
-	import { spotify_fetch_get } from '../lib/utils/spotifyFetchFuncs';
+	export const load = async ({ fetch, url }) => {
+		const code = url.searchParams.get('code');
 
-	export const load = async () => {
-		if (typeof window !== 'undefined') {
-			let playlists = await spotify_fetch_get('https://api.spotify.com/v1/me/playlists');
-
-			console.log(playlists);
-		}
+		let tokens = await fetch(`/api/token?code=${code}`);
+		tokens = await tokens.json();
 
 		return {
-			props: {}
+			props: {
+				tokens
+			}
 		};
 	};
 </script>
@@ -17,8 +16,17 @@
 <script>
 	import LeftSidebar from '../lib/components/LeftSidebar.svelte';
 	import RightSidebar from '../lib/components/RightSidebar.svelte';
-
+	import { onMount } from 'svelte';
 	import '../app.css';
+
+	export let tokens;
+
+	onMount(() => {
+		if (tokens?.access_token) {
+			localStorage.setItem('accessToken', tokens.access_token);
+			localStorage.setItem('refreshToken', tokens.refresh_token);
+		}
+	});
 </script>
 
 <main class="root">

@@ -1,43 +1,108 @@
-<script context="module">
-	export const load = async ({ fetch, url }) => {
-		const code = url.searchParams.get('code');
-
-		let tokens = await fetch(`/api/token?code=${code}`);
-		tokens = await tokens.json();
-
-		if (!tokens.error) {
-			return {
-				props: {
-					tokens
-				}
-			};
-		} else {
-			return {
-				props: {
-					tokens: null
-				}
-			};
-		}
-	};
-</script>
-
 <script>
-	export let tokens;
+	import { onMount } from 'svelte/internal';
+	import { spotify_fetch_get } from '../lib/utils/spotifyFetchFuncs';
 
-	if (tokens && typeof window !== 'undefined') {
-		localStorage.setItem('accessToken', tokens.access_token);
-		localStorage.setItem('refreshToken', tokens.refresh_token);
-	}
+	let recentlyPlayed = { items: [] };
+
+	onMount(async () => {
+		recentlyPlayed = await spotify_fetch_get(
+			`https://api.spotify.com/v1/me/player/recently-played?limit=6`
+		);
+	});
 </script>
 
-<section class="central-section" />
+<section class="central-section">
+	<div class="recommendation-section">
+		<h3 class="recommendation-section-title">Recently played</h3>
+
+		<ul class="items-row">
+			{#each recentlyPlayed.items as item}
+				<li class="item">
+					<a href="/playlist/{item.track.id}" class="card">
+						<img class="card-img" src={item.track.album.images[1].url} alt={item.track.name} />
+						<div class="card-desc">
+							<h4 class="card-name">{item.track.name}</h4>
+							<h5 class="card-info">
+								{item.track.artists[0].name}
+							</h5>
+						</div>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	</div>
+</section>
 
 <style>
 	.central-section {
-		display: flex;
-		flex: 15;
-		padding: 1rem;
-		background-color: rgba(22, 22, 22, 0.9);
+		width: 100%;
 		height: 100vh;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		background-color: #353535;
+	}
+
+	.recommendation-section {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 2rem;
+	}
+
+	.recommendation-section-title {
+		font-weight: 600;
+		font-size: 20px;
+		margin-bottom: 1rem;
+	}
+
+	.items-row {
+		display: flex;
+	}
+
+	.item {
+		max-width: calc((100% - 80px) / 6);
+		margin-right: 1rem;
+	}
+
+	.item:last-of-type {
+		margin-right: 0;
+	}
+
+	.card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 0.5rem;
+		background-color: #4d4d4d;
+		border-radius: 0.5rem;
+	}
+
+	.card-img {
+		width: 100%;
+		border-radius: 0.25rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.card-desc {
+		width: 100%;
+	}
+
+	.card-name {
+		font-weight: 600;
+		font-size: 16px;
+		margin-bottom: 0.25rem;
+		margin-left: auto;
+		margin-right: auto;
+		width: calc(90%);
+		text-align: center;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	.card-info {
+		font-weight: 400;
+		font-size: 16px;
+		text-align: center;
 	}
 </style>

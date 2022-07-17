@@ -8,10 +8,9 @@
 <style>
 	.right-sidebar {
 		display: flex;
-
 		padding: 1rem;
-		background-color: rgb(22, 22, 22);
-		min-width: 90px;
+		background-color: #1a181e;
+		min-width: 80px;
 		height: 100vh;
 	}
 </style>
