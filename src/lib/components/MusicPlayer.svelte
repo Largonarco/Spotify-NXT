@@ -2,10 +2,10 @@
 	import { onMount } from 'svelte';
 	import { spotify_fetch } from '../utils/spotifyFetchFuncs';
 
-	let deviceId, position, duration, trackWindow, error;
+	let deviceId, error;
 
 	onMount(async () => {
-		const spotifyPlayer = window.spotifyPlayer;
+		const { spotifyPlayer } = window;
 
 		//Error handling
 		spotifyPlayer.on('initialization_error', (e) => (error = e));
@@ -17,7 +17,7 @@
 		spotifyPlayer.addListener('ready', ({ device_id }) => {
 			deviceId = device_id;
 		});
-		spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+		spotifyPlayer.addListener('not_ready', () => {
 			deviceId = null;
 		});
 		spotifyPlayer.addListener('autoplay_failed', () => {
@@ -25,8 +25,7 @@
 		});
 
 		//Connecting to spotify
-		const isConnected = await spotifyPlayer.connect();
-		const curr = await spotify_fetch('https://api.spotify.com/v1/me/player/currently-playing');
+		await spotifyPlayer.connect();
 
 		return () => {
 			//Listener cleanup
