@@ -1,12 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		%sveltekit.head%
-	</head>
-	<body>
-		<div>%sveltekit.body%</div>
-	</body>
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	%sveltekit.head%
+</head>
+
+<body>
+	<div>%sveltekit.body%</div>
+
+	<script src="https://sdk.scdn.co/spotify-player.js"></script>
+	<script>
+		window.onSpotifyWebPlaybackSDKReady = () => {
+			window.spotifyPlayer = new Spotify.Player({
+				name: 'Spotify NXT Player',
+				getOAuthToken: async (callback) => {
+					const accessToken = localStorage.getItem('accessToken');
+					const refreshToken = localStorage.getItem('refreshToken');
+
+					let newTokens = await fetch(`/api/refreshToken?token=${refreshToken}`);
+					newTokens = await newTokens.json();
+
+					if (newTokens.access_token) {
+						localStorage.setItem('accessToken', newTokens.access_token);
+						callback(newTokens.access_token);
+					} else {
+						callback(accessToken);
+					}
+				},
+				volume: 0.5
+			});
+		};
+	</script>
+</body>
+
 </html>

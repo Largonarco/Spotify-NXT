@@ -1,17 +1,17 @@
 <script>
 	import { onMount } from 'svelte/internal';
-	import { spotify_fetch_get } from '../lib/utils/spotifyFetchFuncs';
+	import { spotify_fetch } from '../lib/utils/spotifyFetchFuncs';
 
 	let recentlyPlayed = { items: [] };
 
 	onMount(async () => {
-		recentlyPlayed = await spotify_fetch_get(
+		recentlyPlayed = await spotify_fetch(
 			`https://api.spotify.com/v1/me/player/recently-played?limit=6`
 		);
 	});
 </script>
 
-<section class="central-section">
+<div class="home-page">
 	<div class="recommendation-section">
 		<h3 class="recommendation-section-title">Recently played</h3>
 
@@ -31,16 +31,16 @@
 			{/each}
 		</ul>
 	</div>
-</section>
+</div>
 
 <style>
-	.central-section {
-		width: 100%;
-		height: 100vh;
+	.home-page {
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;
 		background-color: #353535;
+		overflow-y: auto;
+		height: calc(100vh - 100px);
 	}
 
 	.recommendation-section {

@@ -14,14 +14,15 @@
 </script>
 
 <script>
-	import LeftSidebar from '../lib/components/LeftSidebar.svelte';
-	import RightSidebar from '../lib/components/RightSidebar.svelte';
-	import { onMount } from 'svelte';
 	import '../app.css';
+	import { onMount } from 'svelte';
+	import LeftSidebar from '../lib/components/LeftSidebar.svelte';
+	import MusicPlayer from '../lib/components/MusicPlayer.svelte';
+	import RightSidebar from '../lib/components/RightSidebar.svelte';
 
 	export let tokens;
 
-	onMount(() => {
+	onMount(async () => {
 		if (tokens?.access_token) {
 			localStorage.setItem('accessToken', tokens.access_token);
 			localStorage.setItem('refreshToken', tokens.refresh_token);
@@ -31,12 +32,20 @@
 
 <main class="root">
 	<LeftSidebar />
-	<slot />
+	<div class="central-section">
+		<slot />
+		<MusicPlayer />
+	</div>
 	<RightSidebar />
 </main>
 
 <style>
 	.root {
 		display: flex;
+	}
+
+	.central-section {
+		width: 100%;
+		height: 100vh;
 	}
 </style>

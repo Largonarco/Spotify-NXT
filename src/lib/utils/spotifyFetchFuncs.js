@@ -1,4 +1,4 @@
-import { fetch_get } from './fetchFuncs';
+import { custom_fetch } from './fetchFuncs';
 
 export const getNewTokens = async () => {
 	const refreshToken = localStorage.getItem('refreshToken');
@@ -11,12 +11,12 @@ export const getNewTokens = async () => {
 	}
 };
 
-export const spotify_fetch_get = async (url) => {
-	let data = await fetch_get(url);
+export const spotify_fetch = async (url, method = 'GET', body = null) => {
+	let data = await custom_fetch(url, method, body);
 
 	if (data?.error?.status === 401) {
 		await getNewTokens();
-		data = await fetch_get(url);
+		data = await custom_fetch(url, method, body);
 	}
 
 	return data;

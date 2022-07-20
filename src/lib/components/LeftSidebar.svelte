@@ -1,11 +1,11 @@
 <script>
 	import { onMount } from 'svelte/internal';
-	import { spotify_fetch_get } from '../utils/spotifyFetchFuncs';
+	import { spotify_fetch } from '../utils/spotifyFetchFuncs';
 
 	let playlists = { items: [] };
 
 	onMount(async () => {
-		playlists = await spotify_fetch_get('https://api.spotify.com/v1/me/playlists');
+		playlists = await spotify_fetch('https://api.spotify.com/v1/me/playlists');
 	});
 </script>
 
