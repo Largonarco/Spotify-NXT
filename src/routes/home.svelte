@@ -51,7 +51,7 @@
 
 	.recommendation-section-title {
 		font-weight: 600;
-		font-size: 20px;
+		font-size: 18px;
 		margin-bottom: 1rem;
 	}
 
@@ -89,7 +89,7 @@
 
 	.card-name {
 		font-weight: 600;
-		font-size: 16px;
+		font-size: 14px;
 		margin-bottom: 0.25rem;
 		margin-left: auto;
 		margin-right: auto;
@@ -102,7 +102,7 @@
 
 	.card-info {
 		font-weight: 400;
-		font-size: 16px;
+		font-size: 14px;
 		text-align: center;
 	}
 </style>

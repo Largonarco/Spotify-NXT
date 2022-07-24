@@ -106,23 +106,23 @@
 	}
 
 	.title-section {
-		margin-bottom: 2.5rem;
+		margin-bottom: 2rem;
 	}
 
 	.title-section h1 {
 		font-weight: 600;
-		font-size: 28px;
+		font-size: 26px;
 	}
 
 	.list-section {
 		display: flex;
 		flex-direction: column;
-		margin-bottom: 2.5rem;
+		margin-bottom: 2rem;
 	}
 
 	.list-section-heading {
 		font-weight: 600;
-		font-size: 24px;
+		font-size: 22px;
 		margin-bottom: 1rem;
 	}
 
@@ -139,7 +139,6 @@
 		display: flex;
 		align-items: center;
 		margin-bottom: 1rem;
-		gap: 1.5rem;
 	}
 
 	.list-item:hover {
@@ -148,16 +147,20 @@
 
 	.menu-item {
 		font-weight: 400;
-		font-size: 20px;
+		font-size: 18px;
 	}
 
 	.menu-item:hover {
 		border-right: 5px solid rgb(206, 91, 34);
 	}
 
+	.bi {
+		margin-right: 1.5rem;
+	}
+
 	.playlist-item {
 		font-weight: 400;
-		font-size: 16px;
+		font-size: 14px;
 		text-overflow: ellipsis;
 	}
 </style>

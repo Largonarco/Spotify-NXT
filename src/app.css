@@ -239,6 +239,13 @@ svg {
 	display: block;
 }
 
+button {
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	color: #d9d9d9;
+}
+
 :not(.show-scrollbar)::-webkit-scrollbar {
 	width: 0;
 	height: 0;
