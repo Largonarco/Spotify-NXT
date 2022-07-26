@@ -10,7 +10,7 @@ export const custom_fetch = async (url, method, body) => {
 				['Accept', 'application/json'],
 				['Content-Type', 'application/json']
 			],
-			body
+			body: body ? JSON.stringify(body) : body
 		});
 		data = await data.json();
 	} catch (error) {

@@ -7,8 +7,8 @@
 	let item;
 	let context;
 	let isPlaying = false;
-	let repeatState = 'off';
-	let shuffleState = 'off';
+	let repeatState = 0;
+	let shuffleState = false;
 	let volume = 100;
 	let id;
 	let deviceId;
@@ -29,7 +29,7 @@
 		spotifyPlayer.on('account_error', (e) => (error = e));
 		spotifyPlayer.on('playback_error', (e) => (error = e));
 
-		spotifyPlayer.addListener('ready', async ({ device_id }) => {
+		spotifyPlayer.addListener('ready', ({ device_id }) => {
 			deviceId = device_id;
 		});
 		spotifyPlayer.addListener('not_ready', () => {
@@ -39,7 +39,7 @@
 			'player_state_changed',
 			async ({ position, duration, track_window: { current_track } }) => {
 				const currState = await spotifyPlayer.getCurrentState();
-				const vol = await player.getVolume();
+				const vol = await spotifyPlayer.getVolume();
 
 				songProgress = Math.round(position / 1000);
 				songDuration = Math.round(duration / 1000);
@@ -72,6 +72,88 @@
 			spotifyPlayer.disconnect();
 		};
 	});
+
+	const handlePlay = async () => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+					'PUT',
+					{
+						context_uri: context.uri,
+						position_ms: songProgress
+					}
+			  )
+			: null;
+	};
+
+	const handlePause = async () => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`,
+					'PUT'
+			  )
+			: null;
+	};
+
+	const nextTrack = async () => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`,
+					'POST'
+			  )
+			: null;
+	};
+
+	const prevTrack = async () => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`,
+					'POST'
+			  )
+			: null;
+	};
+
+	const handleShuffle = async () => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/shuffle?device_id=${deviceId}&state=${!shuffleState}`,
+					'PUT'
+			  )
+			: null;
+	};
+
+	const handleRepeat = async () => {
+		let repeatMode;
+		switch (repeatState) {
+			case 0:
+				repeatMode = 'off';
+				break;
+			case 1:
+				repeatMode = 'context';
+				break;
+			case 2:
+				repeatMode = 'track';
+				break;
+		}
+
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/repeat?device_id=${deviceId}&state=${repeatMode}`,
+					'PUT'
+			  )
+			: null;
+	};
+
+	const handleVolume = async (type) => {
+		deviceId
+			? await spotify_fetch(
+					`https://api.spotify.com/v1/me/player/volume?device_id=${deviceId}&volume_percent=${
+						type === 'incr' ? volume + 1 : volume - 1
+					}`,
+					'PUT'
+			  )
+			: null;
+	};
 </script>
 
 <div class="music-player">
@@ -115,24 +197,39 @@
 	<div class="music-playback-control">
 		<div class="user-actions">
 			<div class="song-continuity-actions">
-				<button style="margin-right: 1rem;">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						fill="currentColor"
-						class="bi bi-repeat"
-						viewBox="0 0 16 16">
-						<path
-							d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192Zm3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z" />
-					</svg>
+				<button style="margin-right: 1rem;" on:click={handleRepeat}>
+					{#if repeatState === 2}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							fill="currentColor"
+							class="bi bi-repeat-1"
+							viewBox="0 0 16 16">
+							<path
+								d="M11 4v1.466a.25.25 0 0 0 .41.192l2.36-1.966a.25.25 0 0 0 0-.384l-2.36-1.966a.25.25 0 0 0-.41.192V3H5a5 5 0 0 0-4.48 7.223.5.5 0 0 0 .896-.446A4 4 0 0 1 5 4h6Zm4.48 1.777a.5.5 0 0 0-.896.446A4 4 0 0 1 11 12H5.001v-1.466a.25.25 0 0 0-.41-.192l-2.36 1.966a.25.25 0 0 0 0 .384l2.36 1.966a.25.25 0 0 0 .41-.192V13h6a5 5 0 0 0 4.48-7.223Z" />
+							<path
+								d="M9 5.5a.5.5 0 0 0-.854-.354l-1.75 1.75a.5.5 0 1 0 .708.708L8 6.707V10.5a.5.5 0 0 0 1 0v-5Z" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							fill={repeatState === 0 ? 'currentColor' : 'rgb(206, 91, 34)'}
+							class="bi bi-repeat"
+							viewBox="0 0 16 16">
+							<path
+								d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192Zm3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z" />
+						</svg>
+					{/if}
 				</button>
-				<button>
+				<button on:click={handleShuffle}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
 						height="16"
-						fill="currentColor"
+						fill={shuffleState ? 'rgb(206, 91, 34)' : 'currentColor'}
 						class="bi bi-shuffle"
 						viewBox="0 0 16 16">
 						<path
@@ -145,7 +242,7 @@
 			</div>
 
 			<div class="playback-actions">
-				<button style="margin-right: 1rem;">
+				<button style="margin-right: 1rem;" on:click={prevTrack}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -159,7 +256,7 @@
 					</svg>
 				</button>
 				{#if isPlaying}
-					<button class="play-button" style="margin-right: 1rem;">
+					<button class="play-button" style="margin-right: 1rem;" on:click={handlePause}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="20"
@@ -172,7 +269,11 @@
 						</svg>
 					</button>
 				{:else}
-					<button class="play-button" style="margin-right: 1rem;">
+					<button
+						type="button"
+						class="play-button"
+						style="margin-right: 1rem;"
+						on:click={handlePlay}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="20"
@@ -185,7 +286,7 @@
 						</svg>
 					</button>
 				{/if}
-				<button style="margin-right: 1rem;">
+				<button style="margin-right: 1rem;" on:click={nextTrack}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -201,7 +302,7 @@
 			</div>
 
 			<div class="volume-control">
-				<button style="margin-right: 1rem;"
+				<button style="margin-right: 1rem;" on:click={() => handleVolume('decr')}
 					><svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -212,7 +313,7 @@
 						<path
 							d="M9 4a.5.5 0 0 0-.812-.39L5.825 5.5H3.5A.5.5 0 0 0 3 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 9 12V4zM6.312 6.39 8 5.04v5.92L6.312 9.61A.5.5 0 0 0 6 9.5H4v-3h2a.5.5 0 0 0 .312-.11zM12.025 8a4.486 4.486 0 0 1-1.318 3.182L10 10.475A3.489 3.489 0 0 0 11.025 8 3.49 3.49 0 0 0 10 5.525l.707-.707A4.486 4.486 0 0 1 12.025 8z" />
 					</svg></button>
-				<button
+				<button on:click={() => handleVolume('incr')}
 					><svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="20"
