@@ -1,25 +1,18 @@
 <script>
-	import { onMount } from 'svelte';
+	import { beforeUpdate, onMount } from 'svelte';
 	import { spotify_fetch } from '../utils/spotifyFetchFuncs';
 
-	let songProgress = 0;
-	let songDuration = 0;
-	let item;
-	let context;
-	let isPlaying = false;
-	let repeatState = 0;
-	let shuffleState = false;
-	let volume = 100;
-	let id;
-	let deviceId;
-	let error;
-
-	$: {
-		id = setTimeout(
-			() => (songProgress < songDuration && isPlaying ? songProgress++ : clearTimeout(id)),
-			1000
-		);
-	}
+	let songProgress = 0,
+		songDuration = 0,
+		item,
+		contextURI,
+		isPlaying,
+		shuffleState,
+		repeatState,
+		volume,
+		id,
+		deviceId,
+		error;
 
 	onMount(async () => {
 		const { spotifyPlayer } = window;
@@ -44,23 +37,34 @@
 				songProgress = Math.round(position / 1000);
 				songDuration = Math.round(duration / 1000);
 				item = current_track;
+				contextURI = currState.context.uri;
 				isPlaying = !currState.paused;
-				repeatState = currState.repeat_mode;
 				shuffleState = currState.shuffle;
+				repeatState = currState.repeat_mode;
 				volume = vol * 100;
+
+				if (isPlaying && songProgress < songDuration && !id) {
+					id = setInterval(() => {
+						songProgress++;
+					}, 1000);
+				} else if (!isPlaying && id) {
+					clearInterval(id);
+				}
 			}
 		);
 
 		const isConnected = await spotifyPlayer.connect();
 
 		if (isConnected) {
-			const currentSong = await spotify_fetch(
-				'https://api.spotify.com/v1/me/player/recently-played?limit=1'
-			);
+			const nowPlayingContext = JSON.parse(localStorage.getItem('nowPlayingContext'));
 
-			if (!currentSong.error) {
-				item = currentSong.items[0].track;
-				context = currentSong.items[0].context;
+			if (nowPlayingContext) {
+				item = nowPlayingContext.item;
+				contextURI = nowPlayingContext.contextURI;
+				isPlaying = nowPlayingContext.isPlaying;
+				shuffleState = nowPlayingContext.shuffleState;
+				repeatState = nowPlayingContext.repeatState;
+				volume = nowPlayingContext.volume;
 			}
 		}
 
@@ -73,14 +77,30 @@
 		};
 	});
 
+	beforeUpdate(() => {
+		item
+			? localStorage.setItem(
+					'nowPlayingContext',
+					JSON.stringify({
+						item,
+						contextURI,
+						isPlaying,
+						shuffleState,
+						repeatState,
+						volume
+					})
+			  )
+			: null;
+	});
+
 	const handlePlay = async () => {
 		deviceId
 			? await spotify_fetch(
 					`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
 					'PUT',
 					{
-						context_uri: context.uri,
-						position_ms: songProgress
+						context_uri: contextURI,
+						position_ms: songProgress * 1000
 					}
 			  )
 			: null;
@@ -123,6 +143,8 @@
 	};
 
 	const handleRepeat = async () => {
+		repeatState === 2 ? (repeatState = 0) : repeatState++;
+
 		let repeatMode;
 		switch (repeatState) {
 			case 0:
@@ -156,7 +178,7 @@
 	};
 </script>
 
-<div class="music-player">
+<div class="music-player" style="display: {item ? 'flex' : 'none'}">
 	<div class="music-details">
 		{#if item}
 			<img src={item.album.images[1].url} alt={item.name} class="music-img" />
@@ -343,10 +365,12 @@
 
 <style>
 	.music-player {
+		position: fixed;
+		left: 260px;
+		bottom: 0;
+		right: 80px;
 		padding: 15px 0;
 		height: 100px;
-		width: 100%;
-		display: flex;
 		background-color: #1a181e;
 		border-left: 1px solid #212529;
 		border-right: 1px solid #212529;
@@ -441,7 +465,7 @@
 	}
 
 	.progress-bar {
-		width: 500px;
+		width: 70%;
 		align-self: center;
 	}
 </style>

@@ -40,7 +40,7 @@
 		flex-direction: column;
 		background-color: #353535;
 		overflow-y: auto;
-		height: calc(100vh - 100px);
+		height: 100%;
 	}
 
 	.recommendation-section {
