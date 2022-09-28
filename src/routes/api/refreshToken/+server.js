@@ -1,7 +1,5 @@
-import 'dotenv/config';
-
-export const get = async ({ url }) => {
-	const { CLIENT_ID, CLIENT_SECRET } = process.env;
+export const GET = async ({ url }) => {
+	const { VITE_CLIENT_ID, VITE_CLIENT_SECRET } = import.meta.env;
 	const refreshToken = url.searchParams.get('token');
 
 	let res = await fetch(
@@ -9,14 +7,13 @@ export const get = async ({ url }) => {
 		{
 			method: 'POST',
 			headers: {
-				Authorization: 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'),
+				Authorization:
+					'Basic ' + Buffer.from(VITE_CLIENT_ID + ':' + VITE_CLIENT_SECRET).toString('base64'),
 				'Content-Type': 'application/x-www-form-urlencoded'
 			}
 		}
 	);
 	res = await res.json();
 
-	return {
-		body: res
-	};
+	return new Response(JSON.stringify(res));
 };

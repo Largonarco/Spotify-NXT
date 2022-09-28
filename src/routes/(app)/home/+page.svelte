@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte/internal';
-	import { spotify_fetch } from '../lib/utils/spotifyFetchFuncs';
+	import { spotify_fetch } from '../../../lib/utils/spotifyFetchFuncs';
 
 	let recentlyPlayed = { items: [] };
 
