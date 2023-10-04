@@ -1,16 +1,14 @@
 <script>
 </script>
 
-<section class="right-sidebar">
-	<div />
-</section>
+<section class="right-sidebar" />
 
 <style>
 	.right-sidebar {
+		height: 100vh;
+		min-width: 80px;
 		display: flex;
 		padding: 1rem;
-		background-color: #1a181e;
-		min-width: 80px;
-		height: 100vh;
+		background-color: #001a2c;
 	}
 </style>

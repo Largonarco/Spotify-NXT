@@ -8,11 +8,12 @@ export const GET = async ({ url }) => {
 			method: 'POST',
 			headers: {
 				Authorization:
-					'Basic ' + Buffer.from(VITE_CLIENT_ID + ':' + VITE_CLIENT_SECRET).toString('base64'),
+					'Basic ' + new Buffer.from(VITE_CLIENT_ID + ':' + VITE_CLIENT_SECRET).toString('base64'),
 				'Content-Type': 'application/x-www-form-urlencoded'
 			}
 		}
 	);
+
 	res = await res.json();
 
 	return new Response(JSON.stringify(res));

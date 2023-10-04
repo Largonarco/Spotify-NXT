@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte/internal';
-	import { spotify_fetch } from '../../../lib/utils/spotifyFetchFuncs';
+	import { spotify_fetch } from '../../../lib/utils/spotifyFetch';
 
 	let recentlyPlayed = { items: [] };
 
@@ -9,27 +9,34 @@
 			`https://api.spotify.com/v1/me/player/recently-played?limit=6`
 		);
 	});
+
+	$: console.log(recentlyPlayed);
 </script>
 
 <div class="home-page">
-	<div class="recommendation-section">
-		<h3 class="recommendation-section-title">Recently played</h3>
+	<div class="section recently-played">
+		<h4 class="head">Recently played</h4>
 
-		<ul class="items-row">
+		<div class="body row items">
 			{#each recentlyPlayed.items as item}
-				<li class="item">
-					<a href="/playlist/{item.track.id}" class="card">
-						<img class="card-img" src={item.track.album.images[1].url} alt={item.track.name} />
-						<div class="card-desc">
-							<h4 class="card-name">{item.track.name}</h4>
-							<h5 class="card-info">
-								{item.track.artists[0].name}
-							</h5>
+				<div class="card item">
+					<a href="/playlist/{item.id}">
+						<div class="cover" style="background-image: url({item.track.album.images[1].url});">
+							<div class="info">
+								<h4 class="title">{item.track.name}</h4>
+								<div class="specifics">
+									<a href="/artists/{item.track.artists[0].id}">
+										<h5 class="specific artist-name">
+											{item.track.artists[0].name}
+										</h5>
+									</a>
+								</div>
+							</div>
 						</div>
 					</a>
-				</li>
+				</div>
 			{/each}
-		</ul>
+		</div>
 	</div>
 </div>
 
@@ -38,71 +45,88 @@
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;
-		background-color: #353535;
+		background-color: #00111c;
 		overflow-y: auto;
 		height: 100%;
 	}
 
-	.recommendation-section {
+	.home-page .section {
+		width: 100%;
+		margin-bottom: 2rem;
 		display: flex;
 		flex-direction: column;
-		margin-bottom: 2rem;
 	}
 
-	.recommendation-section-title {
+	.home-page .section .head {
+		font-size: 20px;
 		font-weight: 600;
-		font-size: 18px;
 		margin-bottom: 1rem;
 	}
 
-	.items-row {
+	.home-page .section .body {
 		display: flex;
 	}
 
-	.item {
-		max-width: calc((100% - 80px) / 6);
+	.section .body .card {
+		width: calc((100vw - 260px - 7rem) / 6);
 		margin-right: 1rem;
+		border-radius: 0.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.089);
 	}
 
-	.item:last-of-type {
+	.section .body .card:last-of-type {
 		margin-right: 0;
 	}
 
-	.card {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 0.5rem;
-		background-color: #4d4d4d;
+	.body .card .cover {
+		position: relative;
+		width: calc(100%);
+		aspect-ratio: 1;
 		border-radius: 0.5rem;
+		background-size: contain;
 	}
 
-	.card-img {
-		width: 100%;
-		border-radius: 0.25rem;
-		margin-bottom: 0.5rem;
+	.card .cover .info {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.5rem;
+		background: linear-gradient(180deg, transparent, 50%, black);
 	}
 
-	.card-desc {
-		width: 100%;
-	}
-
-	.card-name {
-		font-weight: 600;
-		font-size: 14px;
-		margin-bottom: 0.25rem;
-		margin-left: auto;
+	.cover .info .title {
+		width: calc(95%);
 		margin-right: auto;
-		width: calc(90%);
-		text-align: center;
+		margin-bottom: 0.25rem;
+		font-size: 14px;
+		font-weight: 600;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
 
-	.card-info {
-		font-weight: 400;
+	.cover .info .specifics {
+		width: 100%;
+		display: flex;
+		align-items: center;
+	}
+
+	.info .specifics a {
+		width: 100%;
+	}
+
+	.info .specifics .artist-name {
+		width: calc(95%);
 		font-size: 14px;
-		text-align: center;
+		font-weight: 400;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	.info .specifics .artist-name:hover {
+		text-decoration: underline;
 	}
 </style>

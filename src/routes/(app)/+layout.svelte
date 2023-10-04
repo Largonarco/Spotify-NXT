@@ -21,7 +21,6 @@
 		<slot />
 		<MusicPlayer />
 	</div>
-	<RightSidebar />
 </main>
 
 <style>
