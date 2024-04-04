@@ -1,16 +1,16 @@
 <script>
 	import { FastAverageColor } from 'fast-average-color';
-	import { playerParams, user } from '../../../../lib/utils/stores';
-	import { intervalToDuration } from 'date-fns';
+	import { playerParams } from '../../../../lib/utils/stores';
+	import { intervalToDuration, format, parseISO } from 'date-fns';
 	import { spotify_fetch } from '../../../../lib/utils/spotifyFetch';
 
 	export let data;
 	$: isLiked = null;
 	$: artist = data.artist;
-	$: if ($user && artist) {
+	$: if (artist) {
 		spotify_fetch(
 			`https://api.spotify.com/v1/me/following/contains?type=artist&ids=${artist.id}`
-		).then((val) => (isLiked = val));
+		).then((val) => (isLiked = val[0]));
 	}
 	$: if (artist?.images[2].url) {
 		const fac = new FastAverageColor();
@@ -23,7 +23,6 @@
 					).style.background = `linear-gradient(180deg, ${avgColor.rgba}, 40%, rgb(0, 17, 28) 95% )`)
 			);
 	}
-	$: console.log(artist);
 
 	const handleArtistPlay = async () => {
 		$playerParams.deviceId
@@ -202,7 +201,9 @@
 										<div class="info">
 											<h4 class="title">{album.name}</h4>
 											<div class="specifics">
-												<h5 class="specific release-date">{album.release_date.slice(0, 4)}</h5>
+												<h5 class="specific release-date">
+													{album.release_date.slice(0, 4)}
+												</h5>
 												<h5 class="specific track-count">{album.total_tracks} tracks</h5>
 											</div>
 										</div>
@@ -374,6 +375,7 @@
 	.portfolio {
 		width: 100%;
 		padding: 1.5rem;
+		padding-bottom: 148px;
 	}
 
 	.portfolio .popular-tracks {

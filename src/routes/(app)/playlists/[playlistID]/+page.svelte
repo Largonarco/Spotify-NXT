@@ -10,12 +10,12 @@
 	$: if ($user && playlist) {
 		spotify_fetch(
 			`https://api.spotify.com/v1/playlists/${playlist.id}/followers/contains?ids=${$user.id}`
-		).then((val) => (isLiked = val));
+		).then((val) => (isLiked = val[0]));
 	}
-	$: if (playlist?.images[2].url) {
+	$: if (playlist?.images[0].url) {
 		const fac = new FastAverageColor();
 		fac
-			.getColorAsync(playlist.images[2].url)
+			.getColorAsync(playlist.images[0].url)
 			.then(
 				(avgColor) =>
 					(document.getElementById(
@@ -40,7 +40,8 @@
 					`https://api.spotify.com/v1/me/player/play?device_id=${$playerParams.deviceId}`,
 					'PUT',
 					{
-						context_uri: playlist.uri
+						context_uri: playlist.uri,
+						offset: { position: 0 }
 					}
 			  )
 			: null;
@@ -204,9 +205,13 @@
 							<div>
 								<p class="name">{item.track.name}</p>
 								<p class="artist">
-									{item.track.artists.map((artist, index) =>
-										index !== item.track.artists.length - 1 ? ` ${artist.name}` : ` ${artist.name}`
-									)}
+									{#each item.track.artists as artist, index}
+										{#if index !== item.track.artists.length - 1}
+											<a href="/artists/{artist.id}"><span>{artist.name}, </span></a>
+										{:else}
+											<a href="/artists/{artist.id}"><span>{artist.name}</span></a>
+										{/if}
+									{/each}
 								</p>
 							</div>
 						</div>
@@ -259,14 +264,14 @@
 		overflow-y: auto;
 	}
 
-	.playlist {
+	.playlist-page .playlist {
 		width: 100%;
 		padding: 1.5rem;
 		position: relative;
 		display: flex;
 	}
 
-	.playlist .image {
+	.playlist-page .playlist .image {
 		width: 200px;
 		height: 200px;
 		border-radius: 0.5rem;
@@ -276,41 +281,41 @@
 			rgba(0, 0, 0, 0.09) 0px -3px 5px;
 	}
 
-	.playlist .details {
+	.playlist-page .playlist .details {
 		width: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
 	}
 
-	.details .title {
+	.playlist .details .title {
 		font-size: 44px;
 		font-weight: 800;
 		margin-bottom: 0.25rem;
 	}
 
-	.details .description {
+	.playlist .details .description {
 		font-size: 16px;
 		font-weight: 400;
 		margin-bottom: 0.75rem;
 	}
 
-	.details .sub-details {
+	.playlist .details .sub-details {
 		display: flex;
 		align-items: center;
 	}
 
-	.sub-details .sub-detail {
+	.details .sub-details .sub-detail {
 		display: flex;
 		align-items: center;
 		margin-right: 1rem;
 	}
 
-	.sub-detail .sub-detail-icon {
+	.details .sub-detail .sub-detail-icon {
 		margin-right: 0.5rem;
 	}
 
-	.playlist .actions {
+	.playlist-page .playlist .actions {
 		position: absolute;
 		bottom: 0;
 		right: 1.5rem;
@@ -327,12 +332,12 @@
 		transform: scale(1.05);
 	}
 
-	.track-list {
+	.playlist-page .track-list {
 		width: 100%;
 		padding: 1.5rem;
 	}
 
-	.track-list .headings {
+	.playlist-page .track-list .headings {
 		width: 100%;
 		height: 40px;
 		display: flex;
@@ -340,25 +345,25 @@
 		border-bottom: 1px solid #a6a6a6;
 	}
 
-	.headings .title {
+	.track-list .headings .title {
 		flex: 8;
 	}
 
-	.headings .album {
+	.track-list .headings .album {
 		flex: 4;
 	}
 
-	.headings .added_on {
+	.track-list .headings .added_on {
 		flex: 2;
 		text-align: center;
 	}
 
-	.headings .duration {
+	.track-list .headings .duration {
 		flex: 1;
 		text-align: center;
 	}
 
-	.headings .like {
+	.track-list .headings .like {
 		flex: 1;
 	}
 
@@ -415,6 +420,10 @@
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+	}
+
+	.title div .artist span:hover {
+		text-decoration: underline;
 	}
 
 	.tracks .track .album {

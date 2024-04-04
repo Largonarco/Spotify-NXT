@@ -1,42 +1,44 @@
 <script>
 	import { FastAverageColor } from 'fast-average-color';
-	import { playerParams, user } from '../../../../lib/utils/stores';
-	import { intlFormatDistance, intervalToDuration } from 'date-fns';
+	import { playerParams } from '../../../../lib/utils/stores';
+	import { intervalToDuration, format, parseISO } from 'date-fns';
 	import { spotify_fetch } from '../../../../lib/utils/spotifyFetch';
 
 	export let data;
 	$: isLiked = null;
 	$: album = data.album;
-	$: if ($user && album) {
-		spotify_fetch(`https://api.spotify.com/v1/me/albums/contains?ids=${$user.id}`).then(
-			(val) => (isLiked = val)
+	$: if (album) {
+		spotify_fetch(`https://api.spotify.com/v1/me/albums/contains?ids=${album.id}`).then(
+			(val) => (isLiked = val[0])
 		);
 	}
-	$: if (artist?.images.length !== 0) {
+	$: if (album?.images[2].url) {
 		const fac = new FastAverageColor();
 		fac
-			.getColorAsync(artist.images[2].url)
+			.getColorAsync(album.images[2].url)
 			.then(
 				(avgColor) =>
 					(document.getElementById(
-						'artist'
+						'album'
 					).style.background = `linear-gradient(180deg, ${avgColor.rgba}, 40%, rgb(0, 17, 28) 95% )`)
 			);
 	}
+	$: console.log(isLiked);
 
-	const handlePlaylistPlay = async () => {
+	const handleAlbumPlay = async () => {
 		$playerParams.deviceId
 			? await spotify_fetch(
 					`https://api.spotify.com/v1/me/player/play?device_id=${$playerParams.deviceId}`,
 					'PUT',
 					{
-						context_uri: playlist.uri
+						context_uri: album.uri,
+						offset: { position: 0 }
 					}
 			  )
 			: null;
 	};
 
-	const handlePlaylistPause = async () => {
+	const handleAlbumPause = async () => {
 		$playerParams.deviceId
 			? await spotify_fetch(
 					`https://api.spotify.com/v1/me/player/pause?device_id=${$playerParams.deviceId}`,
@@ -45,9 +47,9 @@
 			: null;
 	};
 
-	const handlePlaylistLike = async () => {
+	const handleAlbumLike = async () => {
 		await spotify_fetch(
-			`https://api.spotify.com/v1/playlists/${playlist.id}/followers`,
+			`https://api.spotify.com/v1/me/albums?ids=${album.id}`,
 			isLiked ? 'DELETE' : 'PUT'
 		);
 
@@ -60,7 +62,7 @@
 					`https://api.spotify.com/v1/me/player/play?device_id=${$playerParams.deviceId}`,
 					'PUT',
 					{
-						context_uri: playlist.uri,
+						context_uri: album.uri,
 						offset: { position: trackOffset }
 					}
 			  )
@@ -76,14 +78,14 @@
 	};
 </script>
 
-<div class="playlist-page">
+<div class="album-page">
 	{#if album}
-		<div class="playlist" id="playlist">
-			<img class="image" src={album.images[0].url} alt={playlist.name} />
+		<div class="album" id="album">
+			<img class="image" src={album.images[0].url} alt={album.name} />
 
 			<div class="details">
-				<h3 class="title">{playlist.name}</h3>
-				<h4 class="description">{playlist.description}</h4>
+				<h3 class="title">{album.name}</h3>
+				<h4 class="label">{album.label}</h4>
 				<div class="sub-details">
 					<div class="sub-detail">
 						<svg
@@ -96,10 +98,44 @@
 							<path
 								d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z" />
 						</svg>
-						<p class="sub-detail-text">{playlist.owner.display_name}</p>
+						<a class="sub-detail-text artist-name" href="/artists/{album.artists[0].id}">
+							<p>{album.artists[0].name}</p>
+						</a>
 					</div>
 					<div class="sub-detail">
-						<button on:click={handlePlaylistLike}>
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							xmlns="http://www.w3.org/2000/svg"
+							class="bi bi-music-note sub-detail-icon">
+							<path d="M9 13c0 1.105-1.12 2-2.5 2S4 14.105 4 13s1.12-2 2.5-2 2.5.895 2.5 2z" />
+							<path fill-rule="evenodd" d="M9 3v10H8V3h1z" />
+							<path d="M8 2.82a1 1 0 0 1 .804-.98l3-.6A1 1 0 0 1 13 2.22V4L8 5V2.82z" />
+						</svg>
+						<p class="sub-detail-text track-count">{album.total_tracks} tracks</p>
+					</div>
+					<div class="sub-detail">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							xmlns="http://www.w3.org/2000/svg"
+							class="bi bi-clock-history sub-detail-icon">
+							<path
+								d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z" />
+							<path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z" />
+							<path
+								d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z" />
+						</svg>
+						<p class="sub-detail-text release-date">
+							{format(parseISO(album.release_date), 'd MMM yyyy')}
+						</p>
+					</div>
+					<div class="sub-detail">
+						<button on:click={handleAlbumLike}>
 							{#if isLiked}
 								<svg
 									width="20"
@@ -127,28 +163,13 @@
 								</svg>
 							{/if}
 						</button>
-						<p class="sub-detail-text">{playlist.followers.total.toLocaleString()} likes</p>
-					</div>
-					<div class="sub-detail">
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 16 16"
-							fill="currentColor"
-							xmlns="http://www.w3.org/2000/svg"
-							class="bi bi-music-note sub-detail-icon">
-							<path d="M9 13c0 1.105-1.12 2-2.5 2S4 14.105 4 13s1.12-2 2.5-2 2.5.895 2.5 2z" />
-							<path fill-rule="evenodd" d="M9 3v10H8V3h1z" />
-							<path d="M8 2.82a1 1 0 0 1 .804-.98l3-.6A1 1 0 0 1 13 2.22V4L8 5V2.82z" />
-						</svg>
-						<p class="sub-detail-text">{playlist.tracks.total} tracks</p>
 					</div>
 				</div>
 			</div>
 
 			<div class="actions">
-				{#if $playerParams.contextURI === playlist.uri && !$playerParams.isPaused}
-					<button class="play-button" style="margin-right: 1rem;" on:click={handlePlaylistPause}>
+				{#if $playerParams.contextURI === album.uri && !$playerParams.isPaused}
+					<button class="play-button" style="margin-right: 1rem;" on:click={handleAlbumPause}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="24"
@@ -161,7 +182,7 @@
 						</svg>
 					</button>
 				{:else}
-					<button class="play-button" style="margin-right: 1rem;" on:click={handlePlaylistPlay}>
+					<button class="play-button" style="margin-right: 1rem;" on:click={handleAlbumPlay}>
 						<svg
 							width="24"
 							height="24"
@@ -180,38 +201,48 @@
 		<div class="track-list">
 			<div class="headings">
 				<p class="title">Title</p>
-				<p class="album">Album</p>
-				<p class="added_on">Added</p>
 				<p class="duration">Duration</p>
 				<p class="like" />
 			</div>
 
 			<div class="tracks">
-				{#each playlist.tracks.items as item, index}
+				{#each album.tracks.items as track, index}
 					<div class="track" on:click={() => handleIndividualTrackPlay(index)}>
 						<div class="title">
-							<img class="poster" src={item.track.album.images[2].url} alt={item.track.name} />
 							<div>
-								<p class="name">{item.track.name}</p>
+								<div class="name">
+									{#if track.explicit}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="12"
+											height="12"
+											fill="currentColor"
+											class="bi bi-explicit"
+											viewBox="0 0 16 16">
+											<path
+												d="M6.826 10.88H10.5V12h-5V4.002h5v1.12H6.826V7.4h3.457v1.073H6.826v2.408Z" />
+											<path
+												d="M2.5 0A2.5 2.5 0 0 0 0 2.5v11A2.5 2.5 0 0 0 2.5 16h11a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 13.5 0h-11ZM1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11Z" />
+										</svg>
+									{/if}
+									<p>{track.name}</p>
+								</div>
+
 								<p class="artist">
-									{item.track.artists.map((artist, index) =>
-										index !== item.track.artists.length - 1 ? ` ${artist.name}` : ` ${artist.name}`
-									)}
+									{#each track.artists as artist, index}
+										{#if index !== track.artists.length - 1}
+											<a href="/artists/{artist.id}"><span>{artist.name}, </span></a>
+										{:else}
+											<a href="/artists/{artist.id}"><span>{artist.name}</span></a>
+										{/if}
+									{/each}
 								</p>
 							</div>
 						</div>
-						<div class="album"><p>{item.track.album.name}</p></div>
-						<div class="added_on">
-							<p>
-								{item.added_at === '1970-01-01T00:00:00Z'
-									? `   `
-									: intlFormatDistance(new Date(item.added_at), new Date())}
-							</p>
-						</div>
 						<div class="duration">
 							<p>
-								{`${intervalToDuration({ start: 0, end: item.track.duration_ms }).minutes} :  
-									${intervalToDuration({ start: 0, end: item.track.duration_ms }).seconds}`}
+								{`${intervalToDuration({ start: 0, end: track.duration_ms }).minutes} :  
+									${intervalToDuration({ start: 0, end: track.duration_ms }).seconds}`}
 							</p>
 						</div>
 						<button class="like" on:click={handleIndividualTrackLike}>
@@ -241,7 +272,7 @@
 </div>
 
 <style>
-	.playlist-page {
+	.album-page {
 		height: 100%;
 		display: flex;
 		flex-direction: column;
@@ -249,14 +280,14 @@
 		overflow-y: auto;
 	}
 
-	.playlist {
+	.album-page .album {
 		width: 100%;
 		padding: 1.5rem;
 		position: relative;
 		display: flex;
 	}
 
-	.playlist .image {
+	.album-page .album .image {
 		width: 200px;
 		height: 200px;
 		border-radius: 0.5rem;
@@ -266,63 +297,73 @@
 			rgba(0, 0, 0, 0.09) 0px -3px 5px;
 	}
 
-	.playlist .details {
+	.album-page .album .details {
 		width: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
 	}
 
-	.details .title {
+	.album .details .title {
 		font-size: 44px;
 		font-weight: 800;
 		margin-bottom: 0.25rem;
 	}
 
-	.details .description {
+	.album .details .label {
 		font-size: 16px;
 		font-weight: 400;
 		margin-bottom: 0.75rem;
 	}
 
-	.details .sub-details {
+	.album .details .sub-details {
 		display: flex;
 		align-items: center;
 	}
 
-	.sub-details .sub-detail {
+	.details .sub-details .sub-detail {
 		display: flex;
 		align-items: center;
 		margin-right: 1rem;
 	}
 
-	.sub-detail .sub-detail-icon {
+	.details .sub-detail .sub-detail-icon {
 		margin-right: 0.5rem;
 	}
 
-	.playlist .actions {
+	.details .sub-detail .sub-detail-text {
+		font-size: 16px;
+		font-weight: 400;
+	}
+
+	.details .sub-detail .artist-name:hover {
+		text-decoration: underline;
+	}
+
+	.album-page .album .actions {
 		position: absolute;
 		bottom: 0;
 		right: 1.5rem;
 	}
 
-	.playlist .actions .play-button {
+	.album .actions .play-button {
 		background-color: white;
 		padding: 1rem;
 		border-radius: 50%;
 		color: black;
 	}
 
-	.playlist .actions .play-button:hover {
+	.album .actions .play-button:hover {
 		transform: scale(1.05);
 	}
 
-	.track-list {
+	.album-page .track-list {
 		width: 100%;
 		padding: 1.5rem;
+		padding-bottom: 148px;
 	}
 
-	.track-list .headings {
+	.album-page .track-list .headings {
 		width: 100%;
 		height: 40px;
 		display: flex;
@@ -330,32 +371,22 @@
 		border-bottom: 1px solid #a6a6a6;
 	}
 
-	.headings .title {
+	.track-list .headings .title {
 		flex: 8;
 	}
 
-	.headings .album {
-		flex: 4;
-	}
-
-	.headings .added_on {
-		flex: 2;
-		text-align: center;
-	}
-
-	.headings .duration {
+	.track-list .headings .duration {
 		flex: 1;
 		text-align: center;
 	}
 
-	.headings .like {
+	.track-list .headings .like {
 		flex: 1;
 	}
 
 	.track-list .tracks {
 		width: 100%;
 		padding-top: 0.5rem;
-		padding-bottom: 100px;
 		display: flex;
 		flex-direction: column;
 	}
@@ -377,20 +408,23 @@
 		align-items: flex-end;
 	}
 
-	.track .title .poster {
-		width: 48px;
-		height: 48px;
-		border-radius: 0.25rem;
-		margin-right: 0.5rem;
-	}
-
 	.track .title div {
 		display: flex;
 		flex-direction: column;
 	}
 
 	.track .title div .name {
-		width: calc(((100vw - 260px - 3rem) / 2 - 56px - 0.5rem));
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.track .title div .name svg {
+		margin-right: 0.25rem;
+	}
+
+	.track .title div .name p {
+		width: calc(((100vw - 260px - 3rem) * 0.8 - 12px - 0.25rem));
 		font-size: 12px;
 		font-weight: 600;
 		overflow: hidden;
@@ -399,7 +433,7 @@
 	}
 
 	.track .title div .artist {
-		width: calc(((100vw - 260px - 3rem) / 2 - 64px - 0.5rem));
+		width: calc(((100vw - 260px - 3rem) * 0.8));
 		font-size: 12px;
 		font-weight: 400;
 		overflow: hidden;
@@ -407,8 +441,8 @@
 		text-overflow: ellipsis;
 	}
 
-	.tracks .track .album {
-		flex: 4;
+	.title div .artist span:hover {
+		text-decoration: underline;
 	}
 
 	.tracks .track .album p {
@@ -418,16 +452,6 @@
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-	}
-
-	.tracks .track .added_on {
-		flex: 2;
-		min-width: 0;
-		font-size: 12px;
-		font-weight: 400;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
 
 	.tracks .track .duration {
